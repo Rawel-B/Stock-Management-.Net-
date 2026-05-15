@@ -22,7 +22,7 @@ The app seeds a development admin user when the database is empty:
 
 ```powershell
 dotnet restore
-dotnet run --project .\StockManagement\StockManagement.csproj
+dotnet run --project .\StockManagement.csproj
 ```
 
 The default connection string uses SQL Server LocalDB:
