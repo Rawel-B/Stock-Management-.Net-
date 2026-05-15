@@ -1,6 +1,6 @@
 @page "/deliveries"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject DeliveryService DeliveryService
 @inject OrderWorkflowService Workflow
 @inject ISnackbar Snackbar
 
@@ -15,7 +15,7 @@
                 <MudSelect @bind-Value="_delivery.OrderId" Label="Validated order">
                     @foreach (var order in _validatedOrders)
                     {
-                        <MudSelectItem Value="@order.Id">#@order.Id - @order.Client?.Name</MudSelectItem>
+                        <MudSelectItem Value="@order.Id">@order.Name</MudSelectItem>
                     }
                 </MudSelect>
             </MudItem>
@@ -47,8 +47,8 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Order">#@context.OrderId</MudTd>
-            <MudTd DataLabel="Client">@context.Order?.Client?.Name</MudTd>
-            <MudTd DataLabel="Transporter">@context.Transporter?.Name</MudTd>
+            <MudTd DataLabel="Client">@context.ClientName</MudTd>
+            <MudTd DataLabel="Transporter">@context.TransporterName</MudTd>
             <MudTd DataLabel="Date">@context.DeliveryDate.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
             <MudTd DataLabel="Cost">@context.Cost.ToString("C")</MudTd>
             <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@DeliveryColor(context.Status)">@context.Status</MudChip></MudTd>
@@ -61,28 +61,20 @@
 </MudStack>
 
 @code {
-    private Delivery _delivery = new();
+    private DeliveryEditModel _delivery = new();
     private DateTime? _deliveryDate = DateTime.Today.AddDays(2);
-    private List<Order> _validatedOrders = [];
-    private List<Transporter> _transporters = [];
-    private List<Delivery> _deliveries = [];
+    private List<SelectOptionViewModel> _validatedOrders = [];
+    private List<SelectOptionViewModel> _transporters = [];
+    private List<DeliveryViewModel> _deliveries = [];
 
     protected override async Task OnInitializedAsync() => await LoadData();
 
     private async Task LoadData()
     {
-        _validatedOrders = await DbContext.Orders
-            .Include(order => order.Client)
-            .Where(order => order.Status == OrderStatus.Validated && order.Delivery == null)
-            .OrderByDescending(order => order.Date)
-            .ToListAsync();
-        _transporters = await DbContext.Transporters.OrderBy(transporter => transporter.Name).ToListAsync();
-        _deliveries = await DbContext.Deliveries
-            .Include(delivery => delivery.Order)
-            .ThenInclude(order => order!.Client)
-            .Include(delivery => delivery.Transporter)
-            .OrderByDescending(delivery => delivery.DeliveryDate)
-            .ToListAsync();
+        var page = await DeliveryService.GetDeliveryPageAsync();
+        _validatedOrders = page.ValidatedOrders;
+        _transporters = page.Transporters;
+        _deliveries = page.Deliveries;
         _delivery.OrderId = _validatedOrders.FirstOrDefault()?.Id ?? 0;
         _delivery.TransporterId = _transporters.FirstOrDefault()?.Id ?? 0;
     }
@@ -96,9 +88,8 @@
         }
 
         _delivery.DeliveryDate = (_deliveryDate ?? DateTime.Today).ToUniversalTime();
-        DbContext.Deliveries.Add(_delivery);
-        await DbContext.SaveChangesAsync();
-        _delivery = new Delivery();
+        await DeliveryService.CreateDeliveryAsync(_delivery);
+        _delivery = new DeliveryEditModel();
         await LoadData();
         Snackbar.Add("Delivery scheduled.", Severity.Success);
     }

@@ -1,6 +1,6 @@
 @page "/"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject DashboardService DashboardService
 
 <PageTitle>Dashboard</PageTitle>
 
@@ -11,32 +11,32 @@
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.subtitle2">Open orders</MudText>
-                <MudText Typo="Typo.h4">@_openOrders</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.OpenOrders</MudText>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.subtitle2">Low stock products</MudText>
-                <MudText Typo="Typo.h4">@_lowStockProducts</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.LowStockProducts</MudText>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.subtitle2">Pending payments</MudText>
-                <MudText Typo="Typo.h4">@_pendingPayments</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.PendingPayments</MudText>
             </MudPaper>
         </MudItem>
         <MudItem xs="12" sm="6" md="3">
             <MudPaper Class="pa-4" Elevation="1">
                 <MudText Typo="Typo.subtitle2">Revenue tracked</MudText>
-                <MudText Typo="Typo.h4">@_revenue.ToString("C")</MudText>
+                <MudText Typo="Typo.h4">@_dashboard.Revenue.ToString("C")</MudText>
             </MudPaper>
         </MudItem>
     </MudGrid>
 
     <MudPaper Class="pa-4" Elevation="1">
         <MudText Typo="Typo.h6" Class="mb-3">Recent orders</MudText>
-        <MudTable Items="_recentOrders" Dense="true" Hover="true">
+        <MudTable Items="_dashboard.RecentOrders" Dense="true" Hover="true">
             <HeaderContent>
                 <MudTh>Order</MudTh>
                 <MudTh>Client</MudTh>
@@ -46,7 +46,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="Order">#@context.Id</MudTd>
-                <MudTd DataLabel="Client">@context.Client?.Name</MudTd>
+                <MudTd DataLabel="Client">@context.ClientName</MudTd>
                 <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip></MudTd>
                 <MudTd DataLabel="Total">@context.TotalAmount.ToString("C")</MudTd>
                 <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
@@ -56,26 +56,11 @@
 </MudStack>
 
 @code {
-    private int _openOrders;
-    private int _lowStockProducts;
-    private int _pendingPayments;
-    private decimal _revenue;
-    private List<Order> _recentOrders = [];
+    private DashboardViewModel _dashboard = new();
 
     protected override async Task OnInitializedAsync()
     {
-        _openOrders = await DbContext.Orders.CountAsync(order => order.Status != OrderStatus.Delivered && order.Status != OrderStatus.Cancelled);
-        _lowStockProducts = await DbContext.Products.CountAsync(product => product.StockQuantity <= 10);
-        _pendingPayments = await DbContext.Payments.CountAsync(payment => payment.Status == PaymentStatus.Pending);
-        _revenue = await DbContext.Payments
-            .Where(payment => payment.Status == PaymentStatus.Paid)
-            .Select(payment => payment.Order!.TotalAmount)
-            .SumAsync();
-        _recentOrders = await DbContext.Orders
-            .Include(order => order.Client)
-            .OrderByDescending(order => order.Date)
-            .Take(8)
-            .ToListAsync();
+        _dashboard = await DashboardService.GetDashboardAsync();
     }
 
     private static Color StatusColor(OrderStatus status) => status switch

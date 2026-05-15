@@ -1,6 +1,6 @@
 @page "/products"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject ProductService ProductService
 @inject ISnackbar Snackbar
 
 <PageTitle>Products</PageTitle>
@@ -40,11 +40,11 @@
         <RowTemplate>
             <MudTd DataLabel="SKU">@context.Sku</MudTd>
             <MudTd DataLabel="Product">@context.Name</MudTd>
-            <MudTd DataLabel="Supplier">@context.Supplier?.Name</MudTd>
+            <MudTd DataLabel="Supplier">@context.SupplierName</MudTd>
             <MudTd DataLabel="Stock"><MudChip T="string" Size="Size.Small" Color="@(context.StockQuantity <= 10 ? Color.Warning : Color.Success)">@context.StockQuantity</MudChip></MudTd>
             <MudTd DataLabel="Price">@context.UnitPrice.ToString("C")</MudTd>
             <MudTd DataLabel="Actions">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => _product = context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditProduct(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteProduct(context))" />
             </MudTd>
         </RowTemplate>
@@ -52,16 +52,16 @@
 </MudStack>
 
 @code {
-    private Product _product = new();
-    private List<Product> _products = [];
-    private List<Supplier> _suppliers = [];
+    private ProductEditModel _product = new();
+    private List<ProductViewModel> _products = [];
+    private List<SelectOptionViewModel> _suppliers = [];
 
     protected override async Task OnInitializedAsync() => await LoadData();
 
     private async Task LoadData()
     {
-        _suppliers = await DbContext.Suppliers.OrderBy(supplier => supplier.Name).ToListAsync();
-        _products = await DbContext.Products.Include(product => product.Supplier).OrderBy(product => product.Name).ToListAsync();
+        _suppliers = await ProductService.GetSupplierOptionsAsync();
+        _products = await ProductService.GetProductsAsync();
     }
 
     private async Task SaveProduct()
@@ -72,21 +72,28 @@
             return;
         }
 
-        if (_product.Id == 0)
-        {
-            DbContext.Products.Add(_product);
-        }
-
-        await DbContext.SaveChangesAsync();
-        _product = new Product();
+        await ProductService.SaveProductAsync(_product);
+        _product = new ProductEditModel();
         await LoadData();
         Snackbar.Add("Product saved.", Severity.Success);
     }
 
-    private async Task DeleteProduct(Product product)
+    private void EditProduct(ProductViewModel product)
     {
-        DbContext.Products.Remove(product);
-        await DbContext.SaveChangesAsync();
+        _product = new ProductEditModel
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Sku = product.Sku,
+            StockQuantity = product.StockQuantity,
+            UnitPrice = product.UnitPrice,
+            SupplierId = product.SupplierId
+        };
+    }
+
+    private async Task DeleteProduct(ProductViewModel product)
+    {
+        await ProductService.DeleteProductAsync(product.Id);
         await LoadData();
         Snackbar.Add("Product deleted.", Severity.Info);
     }

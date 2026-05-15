@@ -1,6 +1,6 @@
 @page "/orders"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject OrderService OrderService
 @inject OrderWorkflowService Workflow
 @inject ISnackbar Snackbar
 
@@ -68,7 +68,7 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Order">#@context.Id</MudTd>
-            <MudTd DataLabel="Client">@context.Client?.Name</MudTd>
+            <MudTd DataLabel="Client">@context.ClientName</MudTd>
             <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip></MudTd>
             <MudTd DataLabel="Total">@context.TotalAmount.ToString("C")</MudTd>
             <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
@@ -80,7 +80,7 @@
             <MudPaper Class="pa-3 my-2" Elevation="0">
                 @foreach (var line in context.Lines)
                 {
-                    <MudText Typo="Typo.body2">@line.Product?.Name x @line.Quantity at @line.UnitPrice.ToString("C")</MudText>
+                    <MudText Typo="Typo.body2">@line.ProductName x @line.Quantity at @line.UnitPrice.ToString("C")</MudText>
                 }
             </MudPaper>
         </ChildRowContent>
@@ -91,23 +91,19 @@
     private int _selectedClientId;
     private int _selectedProductId;
     private int _quantity = 1;
-    private List<Client> _clients = [];
-    private List<Product> _products = [];
-    private List<Order> _orders = [];
+    private List<SelectOptionViewModel> _clients = [];
+    private List<OrderProductOptionViewModel> _products = [];
+    private List<OrderViewModel> _orders = [];
     private List<DraftLine> _draftLines = [];
 
     protected override async Task OnInitializedAsync() => await LoadData();
 
     private async Task LoadData()
     {
-        _clients = await DbContext.Clients.OrderBy(client => client.Name).ToListAsync();
-        _products = await DbContext.Products.OrderBy(product => product.Name).ToListAsync();
-        _orders = await DbContext.Orders
-            .Include(order => order.Client)
-            .Include(order => order.Lines)
-            .ThenInclude(line => line.Product)
-            .OrderByDescending(order => order.Date)
-            .ToListAsync();
+        var page = await OrderService.GetOrderPageAsync();
+        _clients = page.Clients;
+        _products = page.Products;
+        _orders = page.Orders;
 
         _selectedClientId = _clients.FirstOrDefault()?.Id ?? 0;
         _selectedProductId = _products.FirstOrDefault()?.Id ?? 0;

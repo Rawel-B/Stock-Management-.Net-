@@ -59,6 +59,16 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<OrderWorkflowService>();
+builder.Services.AddScoped<ClientService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<SupplierService>();
+builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<DeliveryService>();
+builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<TransporterService>();
+builder.Services.AddScoped<ApiDataService>();
+builder.Services.AddScoped<JwtTokenService>();
 
 var app = builder.Build();
 

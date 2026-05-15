@@ -1,6 +1,6 @@
 @page "/clients"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject ClientService ClientService
 @inject ISnackbar Snackbar
 
 <PageTitle>Clients</PageTitle>
@@ -39,14 +39,14 @@
 </MudStack>
 
 @code {
-    private Client _client = new();
-    private List<Client> _clients = [];
+    private ClientEditModel _client = new();
+    private List<ClientViewModel> _clients = [];
 
     protected override async Task OnInitializedAsync() => await LoadClients();
 
     private async Task LoadClients()
     {
-        _clients = await DbContext.Clients.OrderBy(client => client.Name).ToListAsync();
+        _clients = await ClientService.GetClientsAsync();
     }
 
     private async Task SaveClient()
@@ -57,26 +57,26 @@
             return;
         }
 
-        if (_client.Id == 0)
-        {
-            DbContext.Clients.Add(_client);
-        }
-
-        await DbContext.SaveChangesAsync();
-        _client = new Client();
+        await ClientService.SaveClientAsync(_client);
+        _client = new ClientEditModel();
         await LoadClients();
         Snackbar.Add("Client saved.", Severity.Success);
     }
 
-    private void EditClient(Client client)
+    private void EditClient(ClientViewModel client)
     {
-        _client = client;
+        _client = new ClientEditModel
+        {
+            Id = client.Id,
+            Name = client.Name,
+            Email = client.Email,
+            Address = client.Address
+        };
     }
 
-    private async Task DeleteClient(Client client)
+    private async Task DeleteClient(ClientViewModel client)
     {
-        DbContext.Clients.Remove(client);
-        await DbContext.SaveChangesAsync();
+        await ClientService.DeleteClientAsync(client.Id);
         await LoadClients();
         Snackbar.Add("Client deleted.", Severity.Info);
     }

@@ -1,6 +1,6 @@
 @page "/payments"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject PaymentService PaymentService
 @inject OrderWorkflowService Workflow
 @inject ISnackbar Snackbar
 
@@ -21,8 +21,8 @@
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Order">#@context.OrderId</MudTd>
-            <MudTd DataLabel="Client">@context.Order?.Client?.Name</MudTd>
-            <MudTd DataLabel="Amount">@context.Order?.TotalAmount.ToString("C")</MudTd>
+            <MudTd DataLabel="Client">@context.ClientName</MudTd>
+            <MudTd DataLabel="Amount">@context.Amount.ToString("C")</MudTd>
             <MudTd DataLabel="Mode">@context.Mode</MudTd>
             <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@PaymentColor(context.Status)">@context.Status</MudChip></MudTd>
             <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</MudTd>
@@ -35,17 +35,13 @@
 </MudStack>
 
 @code {
-    private List<Payment> _payments = [];
+    private List<PaymentViewModel> _payments = [];
 
     protected override async Task OnInitializedAsync() => await LoadPayments();
 
     private async Task LoadPayments()
     {
-        _payments = await DbContext.Payments
-            .Include(payment => payment.Order)
-            .ThenInclude(order => order!.Client)
-            .OrderByDescending(payment => payment.Date)
-            .ToListAsync();
+        _payments = await PaymentService.GetPaymentsAsync();
     }
 
     private async Task MarkPayment(int orderId, PaymentStatus status)

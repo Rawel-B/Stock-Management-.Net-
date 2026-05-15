@@ -1,6 +1,6 @@
 @page "/transporters"
 @attribute [Authorize]
-@inject ApplicationDbContext DbContext
+@inject TransporterService TransporterService
 @inject ISnackbar Snackbar
 
 <PageTitle>Transporters</PageTitle>
@@ -33,9 +33,9 @@
             <MudTd DataLabel="Rating">
                 <MudRating SelectedValue="@context.Rating" ReadOnly="true" />
             </MudTd>
-            <MudTd DataLabel="Deliveries">@context.Deliveries.Count</MudTd>
+            <MudTd DataLabel="Deliveries">@context.DeliveryCount</MudTd>
             <MudTd DataLabel="Actions">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => _transporter = context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditTransporter(context))" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteTransporter(context))" />
             </MudTd>
         </RowTemplate>
@@ -43,14 +43,14 @@
 </MudStack>
 
 @code {
-    private Transporter _transporter = new();
-    private List<Transporter> _transporters = [];
+    private TransporterEditModel _transporter = new();
+    private List<TransporterViewModel> _transporters = [];
 
     protected override async Task OnInitializedAsync() => await LoadTransporters();
 
     private async Task LoadTransporters()
     {
-        _transporters = await DbContext.Transporters.Include(transporter => transporter.Deliveries).OrderBy(transporter => transporter.Name).ToListAsync();
+        _transporters = await TransporterService.GetTransportersAsync();
     }
 
     private async Task SaveTransporter()
@@ -61,21 +61,26 @@
             return;
         }
 
-        if (_transporter.Id == 0)
-        {
-            DbContext.Transporters.Add(_transporter);
-        }
-
-        await DbContext.SaveChangesAsync();
-        _transporter = new Transporter();
+        await TransporterService.SaveTransporterAsync(_transporter);
+        _transporter = new TransporterEditModel();
         await LoadTransporters();
         Snackbar.Add("Transporter saved.", Severity.Success);
     }
 
-    private async Task DeleteTransporter(Transporter transporter)
+    private void EditTransporter(TransporterViewModel transporter)
     {
-        DbContext.Transporters.Remove(transporter);
-        await DbContext.SaveChangesAsync();
+        _transporter = new TransporterEditModel
+        {
+            Id = transporter.Id,
+            Name = transporter.Name,
+            Phone = transporter.Phone,
+            Rating = transporter.Rating
+        };
+    }
+
+    private async Task DeleteTransporter(TransporterViewModel transporter)
+    {
+        await TransporterService.DeleteTransporterAsync(transporter.Id);
         await LoadTransporters();
         Snackbar.Add("Transporter deleted.", Severity.Info);
     }
