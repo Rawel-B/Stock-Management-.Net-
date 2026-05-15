@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["StockManagement/StockManagement.csproj", "StockManagement/"]
+RUN dotnet restore "StockManagement/StockManagement.csproj"
+COPY . .
+WORKDIR "/src/StockManagement"
+RUN dotnet publish "StockManagement.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "StockManagement.dll"]

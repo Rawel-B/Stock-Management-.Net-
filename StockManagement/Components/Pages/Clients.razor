@@ -1,0 +1,83 @@
+@page "/clients"
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject ISnackbar Snackbar
+
+<PageTitle>Clients</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Clients</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="3"><MudTextField @bind-Value="_client.Name" Label="Name" Required="true" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField @bind-Value="_client.Email" Label="Email" Required="true" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField @bind-Value="_client.Address" Label="Address" Required="true" /></MudItem>
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveClient">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable Items="_clients" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Address</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Address">@context.Address</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditClient(context))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteClient(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    private Client _client = new();
+    private List<Client> _clients = [];
+
+    protected override async Task OnInitializedAsync() => await LoadClients();
+
+    private async Task LoadClients()
+    {
+        _clients = await DbContext.Clients.OrderBy(client => client.Name).ToListAsync();
+    }
+
+    private async Task SaveClient()
+    {
+        if (string.IsNullOrWhiteSpace(_client.Name) || string.IsNullOrWhiteSpace(_client.Email))
+        {
+            Snackbar.Add("Name and email are required.", Severity.Warning);
+            return;
+        }
+
+        if (_client.Id == 0)
+        {
+            DbContext.Clients.Add(_client);
+        }
+
+        await DbContext.SaveChangesAsync();
+        _client = new Client();
+        await LoadClients();
+        Snackbar.Add("Client saved.", Severity.Success);
+    }
+
+    private void EditClient(Client client)
+    {
+        _client = client;
+    }
+
+    private async Task DeleteClient(Client client)
+    {
+        DbContext.Clients.Remove(client);
+        await DbContext.SaveChangesAsync();
+        await LoadClients();
+        Snackbar.Add("Client deleted.", Severity.Info);
+    }
+}

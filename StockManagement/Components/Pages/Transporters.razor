@@ -1,0 +1,82 @@
+@page "/transporters"
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject ISnackbar Snackbar
+
+<PageTitle>Transporters</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Transporters</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="4"><MudTextField @bind-Value="_transporter.Name" Label="Name" Required="true" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField @bind-Value="_transporter.Phone" Label="Phone" Required="true" /></MudItem>
+            <MudItem xs="12" md="2"><MudNumericField @bind-Value="_transporter.Rating" Label="Rating" Min="1" Max="5" /></MudItem>
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveTransporter">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable Items="_transporters" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Rating</MudTh>
+            <MudTh>Deliveries</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <MudTd DataLabel="Rating">
+                <MudRating SelectedValue="@context.Rating" ReadOnly="true" />
+            </MudTd>
+            <MudTd DataLabel="Deliveries">@context.Deliveries.Count</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => _transporter = context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteTransporter(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    private Transporter _transporter = new();
+    private List<Transporter> _transporters = [];
+
+    protected override async Task OnInitializedAsync() => await LoadTransporters();
+
+    private async Task LoadTransporters()
+    {
+        _transporters = await DbContext.Transporters.Include(transporter => transporter.Deliveries).OrderBy(transporter => transporter.Name).ToListAsync();
+    }
+
+    private async Task SaveTransporter()
+    {
+        if (string.IsNullOrWhiteSpace(_transporter.Name) || string.IsNullOrWhiteSpace(_transporter.Phone))
+        {
+            Snackbar.Add("Name and phone are required.", Severity.Warning);
+            return;
+        }
+
+        if (_transporter.Id == 0)
+        {
+            DbContext.Transporters.Add(_transporter);
+        }
+
+        await DbContext.SaveChangesAsync();
+        _transporter = new Transporter();
+        await LoadTransporters();
+        Snackbar.Add("Transporter saved.", Severity.Success);
+    }
+
+    private async Task DeleteTransporter(Transporter transporter)
+    {
+        DbContext.Transporters.Remove(transporter);
+        await DbContext.SaveChangesAsync();
+        await LoadTransporters();
+        Snackbar.Add("Transporter deleted.", Severity.Info);
+    }
+}

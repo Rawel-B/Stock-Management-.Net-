@@ -1,0 +1,166 @@
+@page "/orders"
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject OrderWorkflowService Workflow
+@inject ISnackbar Snackbar
+
+<PageTitle>Orders</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Orders</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-3">Create purchase order</MudText>
+        <MudGrid>
+            <MudItem xs="12" md="4">
+                <MudSelect @bind-Value="_selectedClientId" Label="Client" Required="true">
+                    @foreach (var client in _clients)
+                    {
+                        <MudSelectItem Value="@client.Id">@client.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudSelect @bind-Value="_selectedProductId" Label="Product">
+                    @foreach (var product in _products)
+                    {
+                        <MudSelectItem Value="@product.Id">@product.Name (@product.StockQuantity in stock)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="6" md="2"><MudNumericField @bind-Value="_quantity" Label="Quantity" Min="1" /></MudItem>
+            <MudItem xs="6" md="2" Class="d-flex align-end">
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLine">Add line</MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <MudTable Items="_draftLines" Dense="true" Class="mt-3">
+            <HeaderContent>
+                <MudTh>Product</MudTh>
+                <MudTh>Quantity</MudTh>
+                <MudTh>Unit price</MudTh>
+                <MudTh>Total</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Product">@context.ProductName</MudTd>
+                <MudTd DataLabel="Quantity">@context.Quantity</MudTd>
+                <MudTd DataLabel="Unit price">@context.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Total">@((context.Quantity * context.UnitPrice).ToString("C"))</MudTd>
+                <MudTd DataLabel="Actions"><MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => _draftLines.Remove(context))" /></MudTd>
+            </RowTemplate>
+        </MudTable>
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+            <MudText Typo="Typo.h6">Total: @_draftLines.Sum(line => line.Quantity * line.UnitPrice).ToString("C")</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="CreateOrder">Create order</MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <MudTable Items="_orders" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Order</MudTh>
+            <MudTh>Client</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Total</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Order">#@context.Id</MudTd>
+            <MudTd DataLabel="Client">@context.Client?.Name</MudTd>
+            <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip></MudTd>
+            <MudTd DataLabel="Total">@context.TotalAmount.ToString("C")</MudTd>
+            <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="@(context.Status != OrderStatus.Draft)" OnClick="@(() => ValidateOrder(context.Id))">Validate</MudButton>
+            </MudTd>
+        </RowTemplate>
+        <ChildRowContent>
+            <MudPaper Class="pa-3 my-2" Elevation="0">
+                @foreach (var line in context.Lines)
+                {
+                    <MudText Typo="Typo.body2">@line.Product?.Name x @line.Quantity at @line.UnitPrice.ToString("C")</MudText>
+                }
+            </MudPaper>
+        </ChildRowContent>
+    </MudTable>
+</MudStack>
+
+@code {
+    private int _selectedClientId;
+    private int _selectedProductId;
+    private int _quantity = 1;
+    private List<Client> _clients = [];
+    private List<Product> _products = [];
+    private List<Order> _orders = [];
+    private List<DraftLine> _draftLines = [];
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        _clients = await DbContext.Clients.OrderBy(client => client.Name).ToListAsync();
+        _products = await DbContext.Products.OrderBy(product => product.Name).ToListAsync();
+        _orders = await DbContext.Orders
+            .Include(order => order.Client)
+            .Include(order => order.Lines)
+            .ThenInclude(line => line.Product)
+            .OrderByDescending(order => order.Date)
+            .ToListAsync();
+
+        _selectedClientId = _clients.FirstOrDefault()?.Id ?? 0;
+        _selectedProductId = _products.FirstOrDefault()?.Id ?? 0;
+    }
+
+    private void AddLine()
+    {
+        var product = _products.FirstOrDefault(existingProduct => existingProduct.Id == _selectedProductId);
+        if (product is null)
+        {
+            return;
+        }
+
+        _draftLines.Add(new DraftLine(product.Id, product.Name, _quantity, product.UnitPrice));
+    }
+
+    private async Task CreateOrder()
+    {
+        try
+        {
+            await Workflow.CreateOrderAsync(_selectedClientId, _draftLines.Select(line => (line.ProductId, line.Quantity)).ToArray());
+            _draftLines = [];
+            await LoadData();
+            Snackbar.Add("Order created.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private async Task ValidateOrder(int orderId)
+    {
+        try
+        {
+            await Workflow.ValidateOrderAsync(orderId);
+            await LoadData();
+            Snackbar.Add("Order validated and stock updated.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private static Color StatusColor(OrderStatus status) => status switch
+    {
+        OrderStatus.Validated => Color.Info,
+        OrderStatus.Shipped => Color.Warning,
+        OrderStatus.Delivered => Color.Success,
+        OrderStatus.Cancelled => Color.Error,
+        _ => Color.Default
+    };
+
+    private record DraftLine(int ProductId, string ProductName, int Quantity, decimal UnitPrice);
+}

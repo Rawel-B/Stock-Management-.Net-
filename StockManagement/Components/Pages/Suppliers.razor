@@ -1,0 +1,80 @@
+@page "/suppliers"
+@attribute [Authorize]
+@inject ApplicationDbContext DbContext
+@inject ISnackbar Snackbar
+
+<PageTitle>Suppliers</PageTitle>
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4">Suppliers</MudText>
+
+    <MudPaper Class="pa-4" Elevation="1">
+        <MudGrid>
+            <MudItem xs="12" md="3"><MudTextField @bind-Value="_supplier.Name" Label="Name" Required="true" /></MudItem>
+            <MudItem xs="12" md="3"><MudTextField @bind-Value="_supplier.Phone" Label="Phone" /></MudItem>
+            <MudItem xs="12" md="4"><MudTextField @bind-Value="_supplier.Email" Label="Email" /></MudItem>
+            <MudItem xs="12" md="2" Class="d-flex align-end">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveSupplier">Save</MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudTable Items="_suppliers" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Phone</MudTh>
+            <MudTh>Email</MudTh>
+            <MudTh>Products</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Phone">@context.Phone</MudTd>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd DataLabel="Products">@context.Products.Count</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => _supplier = context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteSupplier(context))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudStack>
+
+@code {
+    private Supplier _supplier = new();
+    private List<Supplier> _suppliers = [];
+
+    protected override async Task OnInitializedAsync() => await LoadSuppliers();
+
+    private async Task LoadSuppliers()
+    {
+        _suppliers = await DbContext.Suppliers.Include(supplier => supplier.Products).OrderBy(supplier => supplier.Name).ToListAsync();
+    }
+
+    private async Task SaveSupplier()
+    {
+        if (string.IsNullOrWhiteSpace(_supplier.Name))
+        {
+            Snackbar.Add("Supplier name is required.", Severity.Warning);
+            return;
+        }
+
+        if (_supplier.Id == 0)
+        {
+            DbContext.Suppliers.Add(_supplier);
+        }
+
+        await DbContext.SaveChangesAsync();
+        _supplier = new Supplier();
+        await LoadSuppliers();
+        Snackbar.Add("Supplier saved.", Severity.Success);
+    }
+
+    private async Task DeleteSupplier(Supplier supplier)
+    {
+        DbContext.Suppliers.Remove(supplier);
+        await DbContext.SaveChangesAsync();
+        await LoadSuppliers();
+        Snackbar.Add("Supplier deleted.", Severity.Info);
+    }
+}
