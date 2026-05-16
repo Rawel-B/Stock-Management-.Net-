@@ -1,42 +1,75 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h6" Class="ml-3">Stock Management</MudText>
+<MudLayout Class="app-shell">
+    <MudAppBar Class="app-bar" Elevation="0" Color="Color.Surface">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Primary" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <div class="app-brand">
+            <span class="app-brand-mark">
+                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" />
+            </span>
+            <div class="app-title">
+                <MudText Typo="Typo.subtitle1">Stock Management</MudText>
+                <MudText Typo="Typo.caption" Class="app-subtitle">Orders, delivery, and inventory operations</MudText>
+            </div>
+        </div>
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
-                <MudText Typo="Typo.body2">@context.User.Identity?.Name</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Person">
+                    @context.User.Identity?.Name
+                </MudChip>
             </Authorized>
         </AuthorizeView>
     </MudAppBar>
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer @bind-Open="_drawerOpen" Class="app-drawer" ClipMode="DrawerClipMode.Always" Elevation="0" Width="280px">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="mt-16 pa-4">
-        @Body
+    <MudMainContent Class="mt-16 pa-6">
+        <div class="page-wrap">
+            @Body
+        </div>
     </MudMainContent>
 </MudLayout>
-
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+    <a class="dismiss">X</a>
 </div>
 
 @code {
     private bool _drawerOpen = true;
 
+    private readonly MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#2dd4bf",
+            Secondary = "#60a5fa",
+            Background = "#07111f",
+            Surface = "#0f1b2d",
+            AppbarBackground = "#0b1626",
+            AppbarText = "#e5edf7",
+            DrawerBackground = "#0b1626",
+            DrawerText = "#cbd5e1",
+            TextPrimary = "#e5edf7",
+            TextSecondary = "#94a3b8",
+            LinesDefault = "rgba(148, 163, 184, .18)",
+            TableLines = "rgba(148, 163, 184, .14)",
+            Divider = "rgba(148, 163, 184, .16)"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "8px"
+        }
+    };
+
     private void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
     }
-
 }
-

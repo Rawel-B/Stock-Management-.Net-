@@ -7,9 +7,15 @@
 <PageTitle>Deliveries</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Deliveries</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Deliveries</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Schedule shipments and update delivery progress.</MudText>
+        </div>
+    </div>
 
-    <MudPaper Class="pa-4" Elevation="1">
+    <MudPaper Class="section-panel pa-4" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">Schedule delivery</MudText>
         <MudGrid>
             <MudItem xs="12" md="3">
                 <MudSelect @bind-Value="_delivery.OrderId" Label="Validated order">
@@ -29,13 +35,14 @@
             </MudItem>
             <MudItem xs="12" md="2"><MudDatePicker @bind-Date="_deliveryDate" Label="Delivery date" /></MudItem>
             <MudItem xs="12" md="2"><MudNumericField @bind-Value="_delivery.Cost" Label="Cost" Min="0" /></MudItem>
-            <MudItem xs="12" md="2" Class="d-flex align-end">
+            <MudItem xs="12" md="2" Class="form-actions">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.LocalShipping" OnClick="CreateDelivery">Schedule</MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudTable Items="_deliveries" Dense="true" Hover="true">
+    <MudPaper Class="table-shell" Elevation="0">
+    <MudTable Items="_deliveries" Dense="true" Hover="true" Elevation="0">
         <HeaderContent>
             <MudTh>Order</MudTh>
             <MudTh>Client</MudTh>
@@ -57,7 +64,11 @@
                 <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Success" OnClick="@(() => MarkDelivery(context.Id, DeliveryStatus.Delivered))">Deliver</MudButton>
             </MudTd>
         </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No deliveries scheduled.</MudText>
+        </NoRecordsContent>
     </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

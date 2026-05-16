@@ -7,10 +7,15 @@
 <PageTitle>Orders</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Orders</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Orders</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Create purchase orders, validate them, and keep stock synchronized.</MudText>
+        </div>
+    </div>
 
-    <MudPaper Class="pa-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-3">Create purchase order</MudText>
+    <MudPaper Class="section-panel pa-4" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">Create order</MudText>
         <MudGrid>
             <MudItem xs="12" md="4">
                 <MudSelect @bind-Value="_selectedClientId" Label="Client" Required="true">
@@ -29,12 +34,12 @@
                 </MudSelect>
             </MudItem>
             <MudItem xs="6" md="2"><MudNumericField @bind-Value="_quantity" Label="Quantity" Min="1" /></MudItem>
-            <MudItem xs="6" md="2" Class="d-flex align-end">
+            <MudItem xs="6" md="2" Class="form-actions">
                 <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddLine">Add line</MudButton>
             </MudItem>
         </MudGrid>
 
-        <MudTable Items="_draftLines" Dense="true" Class="mt-3">
+        <MudTable Items="_draftLines" Dense="true" Elevation="0" Class="mt-3">
             <HeaderContent>
                 <MudTh>Product</MudTh>
                 <MudTh>Quantity</MudTh>
@@ -57,34 +62,39 @@
         </MudStack>
     </MudPaper>
 
-    <MudTable Items="_orders" Dense="true" Hover="true">
-        <HeaderContent>
-            <MudTh>Order</MudTh>
-            <MudTh>Client</MudTh>
-            <MudTh>Status</MudTh>
-            <MudTh>Total</MudTh>
-            <MudTh>Date</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Order">#@context.Id</MudTd>
-            <MudTd DataLabel="Client">@context.ClientName</MudTd>
-            <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip></MudTd>
-            <MudTd DataLabel="Total">@context.TotalAmount.ToString("C")</MudTd>
-            <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="@(context.Status != OrderStatus.Draft)" OnClick="@(() => ValidateOrder(context.Id))">Validate</MudButton>
-            </MudTd>
-        </RowTemplate>
-        <ChildRowContent>
-            <MudPaper Class="pa-3 my-2" Elevation="0">
-                @foreach (var line in context.Lines)
-                {
-                    <MudText Typo="Typo.body2">@line.ProductName x @line.Quantity at @line.UnitPrice.ToString("C")</MudText>
-                }
-            </MudPaper>
-        </ChildRowContent>
-    </MudTable>
+    <MudPaper Class="table-shell" Elevation="0">
+        <MudTable Items="_orders" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Order</MudTh>
+                <MudTh>Client</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh>Total</MudTh>
+                <MudTh>Date</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Order">#@context.Id</MudTd>
+                <MudTd DataLabel="Client">@context.ClientName</MudTd>
+                <MudTd DataLabel="Status"><MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@context.Status</MudChip></MudTd>
+                <MudTd DataLabel="Total">@context.TotalAmount.ToString("C")</MudTd>
+                <MudTd DataLabel="Date">@context.Date.ToLocalTime().ToString("yyyy-MM-dd")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" Disabled="@(context.Status != OrderStatus.Draft)" OnClick="@(() => ValidateOrder(context.Id))">Validate</MudButton>
+                </MudTd>
+            </RowTemplate>
+            <ChildRowContent>
+                <MudPaper Class="pa-3 my-2" Elevation="0">
+                    @foreach (var line in context.Lines)
+                    {
+                        <MudText Typo="Typo.body2">@line.ProductName x @line.Quantity at @line.UnitPrice.ToString("C")</MudText>
+                    }
+                </MudPaper>
+            </ChildRowContent>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No orders yet.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

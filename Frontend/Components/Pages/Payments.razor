@@ -7,9 +7,15 @@
 <PageTitle>Payments</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Online payments</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Payments</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Review payment status and reconcile online transactions.</MudText>
+        </div>
+    </div>
 
-    <MudTable Items="_payments" Dense="true" Hover="true">
+    <MudPaper Class="table-shell" Elevation="0">
+    <MudTable Items="_payments" Dense="true" Hover="true" Elevation="0">
         <HeaderContent>
             <MudTh>Order</MudTh>
             <MudTh>Client</MudTh>
@@ -31,7 +37,11 @@
                 <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => MarkPayment(context.OrderId, PaymentStatus.Failed))">Fail</MudButton>
             </MudTd>
         </RowTemplate>
+        <NoRecordsContent>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No payments to display.</MudText>
+        </NoRecordsContent>
     </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

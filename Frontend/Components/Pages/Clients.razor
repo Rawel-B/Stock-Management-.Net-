@@ -6,36 +6,47 @@
 <PageTitle>Clients</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Clients</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Clients</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Maintain customer contact and delivery details.</MudText>
+        </div>
+    </div>
 
-    <MudPaper Class="pa-4" Elevation="1">
+    <MudPaper Class="section-panel pa-4" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_client.Id == 0 ? "Add client" : "Edit client")</MudText>
         <MudGrid>
             <MudItem xs="12" md="3"><MudTextField @bind-Value="_client.Name" Label="Name" Required="true" /></MudItem>
             <MudItem xs="12" md="3"><MudTextField @bind-Value="_client.Email" Label="Email" Required="true" /></MudItem>
             <MudItem xs="12" md="4"><MudTextField @bind-Value="_client.Address" Label="Address" Required="true" /></MudItem>
-            <MudItem xs="12" md="2" Class="d-flex align-end">
+            <MudItem xs="12" md="2" Class="form-actions">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveClient">Save</MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudTable Items="_clients" Dense="true" Hover="true">
-        <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Email</MudTh>
-            <MudTh>Address</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Email">@context.Email</MudTd>
-            <MudTd DataLabel="Address">@context.Address</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditClient(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteClient(context))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudPaper Class="table-shell" Elevation="0">
+        <MudTable Items="_clients" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Address</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Address">@context.Address</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditClient(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteClient(context))" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No clients have been added yet.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

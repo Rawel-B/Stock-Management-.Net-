@@ -6,9 +6,15 @@
 <PageTitle>Products</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Products and suppliers</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Products</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Track stock levels, pricing, and supplier ownership.</MudText>
+        </div>
+    </div>
 
-    <MudPaper Class="pa-4" Elevation="1">
+    <MudPaper Class="section-panel pa-4" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_product.Id == 0 ? "Add product" : "Edit product")</MudText>
         <MudGrid>
             <MudItem xs="12" md="2"><MudTextField @bind-Value="_product.Sku" Label="SKU" /></MudItem>
             <MudItem xs="12" md="3"><MudTextField @bind-Value="_product.Name" Label="Product" Required="true" /></MudItem>
@@ -22,33 +28,38 @@
                     }
                 </MudSelect>
             </MudItem>
-            <MudItem xs="12" md="1" Class="d-flex align-end">
+            <MudItem xs="12" md="1" Class="form-actions">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveProduct">Save</MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudTable Items="_products" Dense="true" Hover="true">
-        <HeaderContent>
-            <MudTh>SKU</MudTh>
-            <MudTh>Product</MudTh>
-            <MudTh>Supplier</MudTh>
-            <MudTh>Stock</MudTh>
-            <MudTh>Price</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="SKU">@context.Sku</MudTd>
-            <MudTd DataLabel="Product">@context.Name</MudTd>
-            <MudTd DataLabel="Supplier">@context.SupplierName</MudTd>
-            <MudTd DataLabel="Stock"><MudChip T="string" Size="Size.Small" Color="@(context.StockQuantity <= 10 ? Color.Warning : Color.Success)">@context.StockQuantity</MudChip></MudTd>
-            <MudTd DataLabel="Price">@context.UnitPrice.ToString("C")</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditProduct(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteProduct(context))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudPaper Class="table-shell" Elevation="0">
+        <MudTable Items="_products" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>SKU</MudTh>
+                <MudTh>Product</MudTh>
+                <MudTh>Supplier</MudTh>
+                <MudTh>Stock</MudTh>
+                <MudTh>Price</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="SKU">@context.Sku</MudTd>
+                <MudTd DataLabel="Product">@context.Name</MudTd>
+                <MudTd DataLabel="Supplier">@context.SupplierName</MudTd>
+                <MudTd DataLabel="Stock"><MudChip T="string" Size="Size.Small" Color="@(context.StockQuantity <= 10 ? Color.Warning : Color.Success)">@context.StockQuantity</MudChip></MudTd>
+                <MudTd DataLabel="Price">@context.UnitPrice.ToString("C")</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditProduct(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteProduct(context))" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No products available.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

@@ -6,40 +6,51 @@
 <PageTitle>Transporters</PageTitle>
 
 <MudStack Spacing="3">
-    <MudText Typo="Typo.h4">Transporters</MudText>
+    <div class="page-heading">
+        <div class="page-heading-text">
+            <MudText Typo="Typo.h4">Transporters</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Manage carriers used for scheduled deliveries.</MudText>
+        </div>
+    </div>
 
-    <MudPaper Class="pa-4" Elevation="1">
+    <MudPaper Class="section-panel pa-4" Elevation="0">
+        <MudText Typo="Typo.h6" Class="mb-3">@(_transporter.Id == 0 ? "Add transporter" : "Edit transporter")</MudText>
         <MudGrid>
             <MudItem xs="12" md="4"><MudTextField @bind-Value="_transporter.Name" Label="Name" Required="true" /></MudItem>
             <MudItem xs="12" md="4"><MudTextField @bind-Value="_transporter.Phone" Label="Phone" Required="true" /></MudItem>
             <MudItem xs="12" md="2"><MudNumericField @bind-Value="_transporter.Rating" Label="Rating" Min="1" Max="5" /></MudItem>
-            <MudItem xs="12" md="2" Class="d-flex align-end">
+            <MudItem xs="12" md="2" Class="form-actions">
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save" OnClick="SaveTransporter">Save</MudButton>
             </MudItem>
         </MudGrid>
     </MudPaper>
 
-    <MudTable Items="_transporters" Dense="true" Hover="true">
-        <HeaderContent>
-            <MudTh>Name</MudTh>
-            <MudTh>Phone</MudTh>
-            <MudTh>Rating</MudTh>
-            <MudTh>Deliveries</MudTh>
-            <MudTh></MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="Phone">@context.Phone</MudTd>
-            <MudTd DataLabel="Rating">
-                <MudRating SelectedValue="@context.Rating" ReadOnly="true" />
-            </MudTd>
-            <MudTd DataLabel="Deliveries">@context.DeliveryCount</MudTd>
-            <MudTd DataLabel="Actions">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditTransporter(context))" />
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteTransporter(context))" />
-            </MudTd>
-        </RowTemplate>
-    </MudTable>
+    <MudPaper Class="table-shell" Elevation="0">
+        <MudTable Items="_transporters" Dense="true" Hover="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Phone</MudTh>
+                <MudTh>Rating</MudTh>
+                <MudTh>Deliveries</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Name">@context.Name</MudTd>
+                <MudTd DataLabel="Phone">@context.Phone</MudTd>
+                <MudTd DataLabel="Rating">
+                    <MudRating SelectedValue="@context.Rating" ReadOnly="true" />
+                </MudTd>
+                <MudTd DataLabel="Deliveries">@context.DeliveryCount</MudTd>
+                <MudTd DataLabel="Actions">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditTransporter(context))" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => DeleteTransporter(context))" />
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No transporters available.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
 </MudStack>
 
 @code {

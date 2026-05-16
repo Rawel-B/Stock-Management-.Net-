@@ -1,27 +1,59 @@
-﻿@inherits LayoutComponentBase
-@layout StockManagement.Components.Layout.MainLayout
+@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 
-@if (HttpContext is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    @Body
-}
+<MudThemeProvider Theme="_theme" IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="auth-shell">
+    <div class="auth-panel">
+        <div class="auth-brand">
+            <span class="app-brand-mark">
+                <MudIcon Icon="@Icons.Material.Filled.Inventory2" Size="Size.Small" />
+            </span>
+            <div>
+                <MudText Typo="Typo.h5">Stock Management</MudText>
+                <MudText Typo="Typo.body2" Class="app-subtitle">Secure operations workspace</MudText>
+            </div>
+        </div>
+        @if (HttpContext is null)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        }
+        else
+        {
+            @Body
+        }
+    </div>
+</div>
 
 @code {
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
+    private readonly MudTheme _theme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#2dd4bf",
+            Secondary = "#60a5fa",
+            Background = "#07111f",
+            Surface = "#0f1b2d",
+            TextPrimary = "#e5edf7",
+            TextSecondary = "#94a3b8",
+            LinesDefault = "rgba(148, 163, 184, .18)"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "8px"
+        }
+    };
+
     protected override void OnParametersSet()
     {
         if (HttpContext is null)
         {
-            // If this code runs, we're currently rendering in interactive mode, so there is no HttpContext.
-            // The identity pages need to set cookies, so they require an HttpContext. To achieve this we
-            // must transition back from interactive mode to a server-rendered page.
             NavigationManager.Refresh(forceReload: true);
         }
     }
