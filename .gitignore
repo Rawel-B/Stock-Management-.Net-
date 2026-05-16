@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # Local verification logs
 stockmanagement.run*.log
+
+# Local generated diagrams
+Diagrams/
