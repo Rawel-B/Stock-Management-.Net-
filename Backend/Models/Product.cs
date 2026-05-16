@@ -3,8 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace StockManagement.Models;
 
-public class Product
-{
+public class Product {
     public int Id { get; set; }
 
     [Required, StringLength(140)]
